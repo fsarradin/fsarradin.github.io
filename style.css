@@ -1,0 +1,92 @@
+:root {
+    --size: 100px;
+    --size-2: calc(var(--size) / 2);
+    --size-4: calc(var(--size) / 4);
+    --max: calc(var(--size) - var(--size-4));
+    --font-size: calc(var(--size) / 10);
+}
+
+.label-context {
+    display: inline-block;
+    width: 4em;
+}
+.number {
+    text-align: right;
+}
+
+#status {
+    width: var(--size);
+    text-align: center;
+    font-size: var(--font-size);
+    margin-top: 1ex;
+    margin-bottom: 1ex;
+}
+
+#action {
+    font-weight: bold;
+}
+#time {
+    color: green;
+}
+
+#canvas {
+    display: flex;
+    width: var(--size);
+    height: var(--size);
+    background: radial-gradient(ellipse 100% 100% at 25% 0%, blue 25%, red);
+    position: relative;
+}
+#square {
+    top: var(--size-4);
+    left: var(--size-4);
+    width: var(--size-2);
+    height: var(--size-2);
+    background-color: white;
+    position: absolute;
+}
+
+#circle {
+    width: var(--size-4);
+    height: var(--size-4);
+    background: radial-gradient(lightgreen 25%, darkgreen);
+    clip-path: circle();
+    position: absolute;
+}
+
+.animate {
+    animation-timing-function: linear;
+    animation-iteration-count: 1;
+}
+
+@keyframes inhale {
+    from {
+        transform: translateY(var(--max));
+    }
+    to {
+        transform: translateY(0px);
+    }
+}
+@keyframes exhale {
+    from {
+        transform: translate(var(--max), 0px);
+    }
+    to {
+        transform: translate(var(--max), var(--max));
+    }
+}
+@keyframes blockToRight {
+    from {
+        transform: translateX(0px);
+    }
+    to {
+        transform: translateX(var(--max));
+    }
+}
+@keyframes blockToLeft {
+    from {
+        transform: translate(var(--max), var(--max));
+    }
+    to {
+        transform: translate(0px, var(--max));
+    }
+}

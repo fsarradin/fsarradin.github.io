@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width-device-width" />
+    <title>RespiRelax</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="head">
+    <h1>RespiRelax</h1>
+
+    <div id="context">
+        <div><label class="label-context">Inhale</label><input id="inhale" class="number" type="text" size="5" /></div>
+        <div><label class="label-context">Exhale</label><input id="exhale" class="number" type="text" size="5" /></div>
+        <div><label class="label-context">Block</label><input id="block" class="number" type="text" size="5" /></div>
+    </div>
+    
+    <div id="status">
+        <span id="action"></span>
+        <span id="time"></span>
+    </div>
+</div>
+
+<div id="canvas">
+    <div id="circle"></div>
+    <div id="square"></div>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
