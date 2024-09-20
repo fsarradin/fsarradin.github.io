@@ -113,14 +113,18 @@ addEventListener('load', (e) => {
 
     circle.addEventListener('animationstart',
         (e) => {
-            play_gong();
             if (circle.style.animationName === 'inhale') {
+                play_gong();
                 action.innerText = "Inhale";
                 startCountdown(inhaleDuration);
             } else if (circle.style.animationName === 'exhale') {
+                play_gong();
                 action.innerText = "Exhale";
                 startCountdown(exhaleDuration);
             } else {
+                if (blockDuration > 0.5) {
+                    play_gong();
+                }
                 action.innerText = "Block";
                 startCountdown(blockDuration);
             }
