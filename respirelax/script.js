@@ -2,6 +2,50 @@ var inhaleDuration = 5;
 var exhaleDuration = 5;
 var blockDuration = 0.25;
 
+const coeff = 0.9;
+const min_size = 100;
+
+var circle = null;
+var interval = null;
+var action = null;
+var time = null;
+
+var inhale = null;
+var exhale = null;
+var block = null;
+
+var gong = new Audio("zen-gong.mp3");
+
+function play_gong() {
+    gong.pause();
+    gong.currentTime = 0.5;
+    gong.play();
+}
+
+function start() {
+    inhaleDuration = parseFloat(inhale.value);
+    exhaleDuration = parseFloat(exhale.value);
+    blockDuration = parseFloat(block.value);
+    circle.className = 'animate';
+    circle.style.animationDuration = `${inhaleDuration}s`;
+    circle.style.animationName = 'inhale';
+}
+
+function stop() {
+    action.innerText = "Breath normally";
+    time.innerText = "";
+    if (interval != null) {
+        clearInterval(interval);
+    }
+    circle.style.animationName = null;
+    circle.style.animationDuration = null;
+    circle.className = null;
+}
+
+function restart() {
+    stop();
+    start();
+}
 
 function renderDuration(duration) {
     if (duration >= 1)
@@ -10,34 +54,43 @@ function renderDuration(duration) {
 }
 
 addEventListener('load', (e) => {
-    var coeff = 0.9;
-    var min_size = 100;
+    // output elements
+    action = document.querySelector("#action");
+    time = document.querySelector("#time");
 
-    var action = document.querySelector("#action");
-    var time = document.querySelector("#time");
-    var circle = document.querySelector("#circle");
+    // breathing circle
+    circle = document.querySelector("#circle");
 
-    var inhale = document.querySelector("#inhale");
-    var exhale = document.querySelector("#exhale");
-    var block = document.querySelector("#block");
+    // input fields
+    inhale = document.querySelector("#inhale");
+    exhale = document.querySelector("#exhale");
+    block = document.querySelector("#block");
     
     var head = document.querySelector("#head");
-
-    var interval = null;
 
     inhale.value = inhaleDuration;
     exhale.value = exhaleDuration;
     block.value = blockDuration;
 
     function getNewSize() {
-        return Math.max(min_size, Math.min(window.innerWidth, window.innerHeight - head.clientHeight) * coeff - 55);
+        return Math.max(
+            min_size,
+            Math.min(
+                window.innerWidth,
+                window.innerHeight - head.clientHeight
+            ) * coeff - 55
+        );
     }
 
-    document.querySelector(":root").style.setProperty("--size", `${getNewSize()}px`);
+    function setSize(value) {
+        document.querySelector(":root").style.setProperty("--size", `${value}px`);
+    }
+
+    setSize(getNewSize());
 
     window.addEventListener('resize',
         (e) => {
-            document.querySelector(":root").style.setProperty("--size", `${getNewSize()}px`);
+            setSize(getNewSize());
         }
     );
 
@@ -60,6 +113,7 @@ addEventListener('load', (e) => {
 
     circle.addEventListener('animationstart',
         (e) => {
+            play_gong();
             if (circle.style.animationName === 'inhale') {
                 action.innerText = "Inhale";
                 startCountdown(inhaleDuration);
@@ -102,44 +156,5 @@ addEventListener('load', (e) => {
         }
     );
 
-    function restart() {
-        circle.style.animationName = null;
-        circle.style.animationDuration = null;
-        circle.className = 'animate';
-        circle.style.animationDuration = `${inhaleDuration}s`;
-        circle.style.animationName = 'inhale';
-        // console.log(`inhale: ${inhaleDuration}`);
-        // console.log(`exhale: ${exhaleDuration}`);
-        // console.log(`block: ${blockDuration}`);
-    }
-
-    inhale.addEventListener('change',
-        (e) => {
-            if (interval != null) {
-                clearInterval(interval);
-            }
-            inhaleDuration = parseFloat(inhale.value);
-            restart();
-        }
-    );
-    exhale.addEventListener('change',
-        (e) => {
-            if (interval != null) {
-                clearInterval(interval);
-            }
-            exhaleDuration = parseFloat(exhale.value);
-            restart();
-        }
-    );
-    block.addEventListener('change',
-        (e) => {
-            if (interval != null) {
-                clearInterval(interval);
-            }
-            blockDuration = parseFloat(block.value);
-            restart();
-        }
-    ),
-
-    restart();
+    stop();
 });
