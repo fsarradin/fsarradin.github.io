@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width-device-width" />
+    <title>Invoice delay</title>
+    <!-- <link rel="stylesheet" href="style.css" /> -->
+</head>
+<body>
+<h1>Invoice delay</h1>
+
+<div>
+    <label for="userDate">Date facture</label>
+    <input id="userDate" type="date" />
+    <button onclick="compute()">Calculate</button>
+</div>
+<table>
+    <tr><td>+30 jours</td><td id="result30"></td></tr>
+    <tr><td>+45 jours fin de mois 1</td><td id="result45_1"></td></tr>
+    <tr><td>+45 jours fin de mois 2</td><td id="result45_2"></td></tr>
+</table>
+
+<script src="script.js"></script>
+</body>
