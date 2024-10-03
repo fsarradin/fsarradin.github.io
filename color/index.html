@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<header>
+    <meta charset="UTF-8" \>
+    <meta name="viewport" content="width-device-width, initial-scala=1.0" \>
+    <title>Color selector</title>
+    <link rel="stylesheet" href="style.css" />
+</header>
+<body>
+
+<table>
+    <thead>
+        <tr>
+            <th>Bits</th>
+            <th>0</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+            <th>7</th>
+            <th>Décimale</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr id="red-row">
+            <td>Red</td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="7" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="6" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="5" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="4" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="3" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="2" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="1" /></td>
+            <td><input type="checkbox" class="bit" data-color="red" data-position="0" /></td>
+            <td id="red-value"></td>
+        </tr>
+        <tr id="green-row">
+            <td>Green</td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="7" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="6" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="5" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="4" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="3" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="2" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="1" /></td>
+            <td><input type="checkbox" class="bit" data-color="green" data-position="0" /></td>
+            <td id="green-value"></td>
+        </tr>
+        <tr id="blue-row">
+            <td>Blue</td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="7" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="6" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="5" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="4" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="3" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="2" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="1" /></td>
+            <td><input type="checkbox" class="bit" data-color="blue" data-position="0" /></td>
+            <td id="blue-value"></td>
+        </tr>
+    </tbody>
+</table>
+
+<div id="color-box"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
