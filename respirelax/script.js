@@ -1,6 +1,6 @@
 var inhaleDuration = 5;
 var exhaleDuration = 5;
-var blockDuration = 0.25;
+var holdDuration = 0.25;
 
 const coeff = 0.9;
 const min_size = 100;
@@ -12,7 +12,7 @@ var time = null;
 
 var inhale = null;
 var exhale = null;
-var block = null;
+var hold = null;
 
 var gong = new Audio("zen-gong.mp3");
 
@@ -25,7 +25,7 @@ function play_gong() {
 function start() {
     inhaleDuration = parseFloat(inhale.value);
     exhaleDuration = parseFloat(exhale.value);
-    blockDuration = parseFloat(block.value);
+    holdDuration = parseFloat(hold.value);
     circle.className = 'animate';
     circle.style.animationDuration = `${inhaleDuration}s`;
     circle.style.animationName = 'inhale';
@@ -64,13 +64,13 @@ addEventListener('load', (e) => {
     // input fields
     inhale = document.querySelector("#inhale");
     exhale = document.querySelector("#exhale");
-    block = document.querySelector("#block");
+    hold = document.querySelector("#hold");
     
     var head = document.querySelector("#head");
 
     inhale.value = inhaleDuration;
     exhale.value = exhaleDuration;
-    block.value = blockDuration;
+    hold.value = holdDuration;
 
     function getNewSize() {
         return Math.max(
@@ -122,11 +122,11 @@ addEventListener('load', (e) => {
                 action.innerText = "Exhale";
                 startCountdown(exhaleDuration);
             } else {
-                if (blockDuration > 0.5) {
+                if (holdDuration > 0.5) {
                     play_gong();
                 }
-                action.innerText = "Block";
-                startCountdown(blockDuration);
+                action.innerText = "Hold";
+                startCountdown(holdDuration);
             }
         }
     );
@@ -135,22 +135,22 @@ addEventListener('load', (e) => {
         (e) => {
             clearInterval(interval);
             if (circle.style.animationName === 'inhale') {
-                if (blockDuration > 0) {
-                    circle.style.animationDuration = `${blockDuration}s`;
-                    circle.style.animationName = 'blockToRight';
+                if (holdDuration > 0) {
+                    circle.style.animationDuration = `${holdDuration}s`;
+                    circle.style.animationName = 'holdToRight';
                 } else {
                     circle.style.animationDuration = `${exhaleDuration}s`;
                     circle.style.animationName = 'exhale';
                 }
             } else if (circle.style.animationName === 'exhale') {
-                if (blockDuration > 0) {
-                    circle.style.animationDuration = `${blockDuration}s`;
-                    circle.style.animationName = 'blockToLeft';
+                if (holdDuration > 0) {
+                    circle.style.animationDuration = `${holdDuration}s`;
+                    circle.style.animationName = 'holdToLeft';
                 } else {
                     circle.style.animationDuration = `${inhaleDuration}s`;
                     circle.style.animationName = 'inhale';
                 }
-            } else if (circle.style.animationName === 'blockToRight') {
+            } else if (circle.style.animationName === 'holdToRight') {
                 circle.style.animationDuration = `${exhaleDuration}s`;
                 circle.style.animationName = 'exhale';
             } else {

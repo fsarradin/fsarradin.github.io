@@ -10,12 +10,18 @@
 <div id="head">
     <h1>RespiRelax</h1>
 
-    <div id="context">
+<section class="row">
+    <div class="column-1" id="context">
         <div><label class="label-context">Inhale</label><input id="inhale" class="number" type="text" size="5" /></div>
         <div><label class="label-context">Exhale</label><input id="exhale" class="number" type="text" size="5" /></div>
-        <div><label class="label-context">Block</label><input id="block" class="number" type="text" size="5" /></div>
+        <div><label class="label-context">Hold</label><input id="hold" class="number" type="text" size="5" /></div>
     </div>
-    
+    <div class="column-2" id="buttons">
+        <button id="Start_button" onclick="start()">▶ Start</button><br />
+        <button id="stop_button" onclick="stop()">⏹ Stop</button>
+    </div>
+</section>
+
     <div id="status">
         <span id="action"></span>
         <span id="time"></span>
@@ -27,13 +33,18 @@
     <div id="square"></div>
 </div>
 
-<div id="buttons">
-    <span>
-        <button id="Start_button" onclick="start()">Start</button>
-        <button id="stop_button" onclick="stop()">Stop</button>
-    </span>
-</div>
-
+<table>
+<thead>
+    <tr><th>Exercise</th><th>Inhale</th><th>Exhale</th><th>Hold</th></tr>
+</thead>
+<tbody>
+    <tr><td class="exercise">Cardiac coherence</td><td class="num">5</td><td class="num">5</td><td class="num">0</td></tr>
+    <tr><td class="exercise">Square breathing</td><td class="num">5</td><td class="num">5</td><td class="num">5</td></tr>
+    <tr><td class="exercise">Hypercapnia (easy)</td><td class="num">5</td><td class="num">10</td><td class="num">0</td></tr>
+    <tr><td class="exercise">Hypercapnia (mid)</td><td class="num">10</td><td class="num">20</td><td class="num">0</td></tr>
+    <tr><td class="exercise">Hypercapnia (hard)</td><td class="num">10</td><td class="num">40</td><td class="num">0</td></tr>
+</tbody>
+</table>
     <script src="script.js"></script>
 </body>
 </html>
