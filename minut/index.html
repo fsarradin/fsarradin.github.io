@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minuteur à palette</title>
+  <link rel="stylesheet" href="minut.css">
+</head>
+<body>
+  <div class="minuteur-container">
+    <div class="digits">
+      <div class="digit-group">
+        <button class="arrow up" data-type="min1">▲</button>
+        <div class="digit" id="min1"></div>
+        <button class="arrow down" data-type="min1">▼</button>
+      </div>
+      <div class="digit-group">
+        <button class="arrow up" data-type="min2">▲</button>
+        <div class="digit" id="min2"></div>
+        <button class="arrow down" data-type="min2">▼</button>
+      </div>
+      <span class="separator">:</span>
+      <div class="digit-group">
+        <button class="arrow up" data-type="sec1">▲</button>
+        <div class="digit" id="sec1"></div>
+        <button class="arrow down" data-type="sec1">▼</button>
+      </div>
+      <div class="digit-group">
+        <button class="arrow up" data-type="sec2">▲</button>
+        <div class="digit" id="sec2"></div>
+        <button class="arrow down" data-type="sec2">▼</button>
+      </div>
+    </div>
+    <button id="startStopBtn">Start</button>
+  </div>
+  <script src="minut.js"></script>
+</body>
+</html>

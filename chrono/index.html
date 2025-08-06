@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Chronomètre à Aiguille</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+        #chrono-canvas { background: #f0f0f0; border-radius: 50%; box-shadow: 0 0 10px #aaa; }
+        #elapsed { font-size: 2em; margin: 20px 0; }
+        button { font-size: 1.2em; margin: 0 10px; padding: 10px 30px; }
+    </style>
+</head>
+<body>
+    <canvas id="chrono-canvas" width="300" height="300"></canvas>
+    <div id="elapsed">00:00.00</div>
+    <label style="font-size:1em;">
+        <input type="checkbox" id="countdown-checkbox"> Décompte 10s avant départ
+    </label>
+    <br>
+    <label style="font-size:1em;">
+        <input type="checkbox" id="auto-stop-checkbox"> Arrêter au moindre mouvement (souris ou clavier)
+    </label>
+    <br>
+    <button id="chrono-btn">Start</button>
+
+    <script>
+        const canvas = document.getElementById('chrono-canvas');
+        const ctx = canvas.getContext('2d');
+        const elapsedDiv = document.getElementById('elapsed');
+        const chronoBtn = document.getElementById('chrono-btn');
+        const countdownCheckbox = document.getElementById('countdown-checkbox');
+        const autoStopCheckbox = document.getElementById('auto-stop-checkbox');
+
+        let startTime = null;
+        let elapsed = 0;
+        let running = false;
+        let interval = null;
+        let chronoState = 'ready'; // 'ready', 'running', 'stopped', 'countdown'
+        let countdown = 10;
+        let countdownInterval = null;
+
+        // Constantes paramétrables
+        // Taille
+        const CENTER_X = 150;
+        const CENTER_Y = 150;
+        const RADIUS = 120;
+        const HAND_LENGTH = 115;
+        const HAND_WIDTH = 4;
+        const CIRCLE_WIDTH = 4;
+        const CENTER_DOT_RADIUS = 8;
+        const GRADUATION_WIDTH = 1;
+        const GRADUATION_BOLD_WIDTH = 3;
+        const GRADUATION_LENGTH = 8;
+        const GRADUATION_BOLD_LENGTH = 15;
+
+        // Temps
+        const HAND_STEP_PER_SEC = 8;
+        const GRADUATION_COUNT = 60;
+
+        // Couleurs
+        const CIRCLE_COLOR = '#333';
+        const GRADUATION_COLOR = '#666';
+        const GRADUATION_BOLD_COLOR = '#000';
+        const CENTER_DOT_COLOR = '#e50';
+        const HAND_COLOR = '#e20';
+
+        function drawChrono(seconds) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Cercle principal
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, RADIUS, 0, 2 * Math.PI);
+            ctx.strokeStyle = CIRCLE_COLOR;
+            ctx.lineWidth = CIRCLE_WIDTH;
+            ctx.stroke();
+
+            // Graduations
+            for (let i = 0; i < GRADUATION_COUNT; i++) {
+                let angle = (i / GRADUATION_COUNT) * 2 * Math.PI - Math.PI / 2;
+                let r1 = RADIUS;
+                let r2 = i % 5 === 0 ? (RADIUS - GRADUATION_BOLD_LENGTH) : (RADIUS - GRADUATION_LENGTH);
+                ctx.beginPath();
+                ctx.moveTo(CENTER_X + r1 * Math.cos(angle), CENTER_Y + r1 * Math.sin(angle));
+                ctx.lineTo(CENTER_X + r2 * Math.cos(angle), CENTER_Y + r2 * Math.sin(angle));
+                ctx.strokeStyle = i % 5 === 0 ? GRADUATION_BOLD_COLOR : GRADUATION_COLOR;
+                ctx.lineWidth = i % 5 === 0 ? GRADUATION_BOLD_WIDTH : GRADUATION_WIDTH;
+                ctx.stroke();
+
+                // Affichage du nombre de secondes sur les graduations principales
+                if (i % 5 === 0) {
+                    let label = i === 0 ? '60' : (i).toString();
+                    let labelAngle = angle;
+                    let labelRadius = RADIUS - GRADUATION_BOLD_LENGTH - 18;
+                    ctx.save();
+                    ctx.font = 'bold 15px Arial';
+                    ctx.fillStyle = '#222';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(label, CENTER_X + labelRadius * Math.cos(labelAngle), CENTER_Y + labelRadius * Math.sin(labelAngle));
+                    ctx.restore();
+                }
+            }
+
+            // Aiguille saccadée au dizième de seconde
+            let sec = seconds % 60;
+            let secStep = Math.floor(sec * HAND_STEP_PER_SEC) / HAND_STEP_PER_SEC;
+            let angle = (secStep / 60) * 2 * Math.PI - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(CENTER_X, CENTER_Y);
+            ctx.lineTo(CENTER_X + HAND_LENGTH * Math.cos(angle), CENTER_Y + HAND_LENGTH * Math.sin(angle));
+            ctx.strokeStyle = HAND_COLOR;
+            ctx.lineWidth = HAND_WIDTH;
+            ctx.stroke();
+
+            // Centre
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CENTER_DOT_RADIUS, 0, 2 * Math.PI);
+            ctx.fillStyle = CENTER_DOT_COLOR;
+            ctx.fill();
+        }
+
+        function update() {
+            let now = Date.now();
+            let total = running ? elapsed + (now - startTime) / 1000 : elapsed;
+            drawChrono(total);
+            // Affichage minutes:secondes.centièmes
+            let minutes = Math.floor(total / 60);
+            let secondes = Math.floor(total % 60);
+            let centiemes = Math.floor((total - Math.floor(total)) * 100);
+            elapsedDiv.textContent = `${minutes.toString().padStart(2, '0')}:${secondes.toString().padStart(2, '0')}.${centiemes.toString().padStart(2, '0')}`;
+        }
+
+
+        function updateButton() {
+            if (chronoState === 'ready') {
+                chronoBtn.textContent = 'Start';
+                chronoBtn.disabled = false;
+            } else if (chronoState === 'countdown') {
+                chronoBtn.textContent = 'Décompte...';
+                chronoBtn.disabled = true;
+            } else if (chronoState === 'running') {
+                chronoBtn.textContent = 'Stop';
+                chronoBtn.disabled = false;
+            } else if (chronoState === 'stopped') {
+                chronoBtn.textContent = 'Reset';
+                chronoBtn.disabled = false;
+            }
+        }
+
+        function startChrono() {
+            if (!running) {
+                // Si l'option décompte est cochée, lancer le décompte
+                if (countdownCheckbox.checked) {
+                    chronoState = 'countdown';
+                    updateButton();
+                    let remaining = countdown;
+                    elapsedDiv.textContent = `Départ dans ${remaining} s...`;
+                    countdownInterval = setInterval(() => {
+                        remaining--;
+                        if (remaining > 0) {
+                            elapsedDiv.textContent = `Départ dans ${remaining} s...`;
+                        } else {
+                            clearInterval(countdownInterval);
+                            chronoState = 'running';
+                            updateButton();
+                            startTime = Date.now();
+                            running = true;
+                            interval = setInterval(update, 40);
+                            if (autoStopCheckbox.checked) enableAutoStop();
+                        }
+                    }, 1000);
+                } else {
+                    startTime = Date.now();
+                    running = true;
+                    interval = setInterval(update, 40);
+                    chronoState = 'running';
+                    updateButton();
+                    if (autoStopCheckbox.checked) enableAutoStop();
+                }
+            }
+        }
+
+        function stopChrono() {
+            if (running) {
+                running = false;
+                elapsed += (Date.now() - startTime) / 1000;
+                clearInterval(interval);
+                update();
+                chronoState = 'stopped';
+                updateButton();
+                disableAutoStop();
+            }
+        }
+
+        function resetChrono() {
+            elapsed = 0;
+            running = false;
+            startTime = null;
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            disableAutoStop();
+            update();
+            chronoState = 'ready';
+            updateButton();
+        }
+
+        // Gestion auto-stop
+        let autoStopEnabled = false;
+        function handleAutoStopEvent(e) {
+            stopChrono();
+        }
+        function enableAutoStop() {
+            if (!autoStopEnabled) {
+                window.addEventListener('mousemove', handleAutoStopEvent, { once: true });
+                window.addEventListener('keydown', handleAutoStopEvent, { once: true });
+                autoStopEnabled = true;
+            }
+        }
+        function disableAutoStop() {
+            if (autoStopEnabled) {
+                window.removeEventListener('mousemove', handleAutoStopEvent, { once: true });
+                window.removeEventListener('keydown', handleAutoStopEvent, { once: true });
+                autoStopEnabled = false;
+            }
+        }
+
+        // Activation/désactivation dynamique de l'auto-stop
+        autoStopCheckbox.addEventListener('change', function() {
+            if (chronoState === 'running') {
+                if (autoStopCheckbox.checked) {
+                    enableAutoStop();
+                } else {
+                    disableAutoStop();
+                }
+            }
+        });
+
+
+        function handleChronoAction() {
+            if (chronoState === 'ready') {
+                startChrono();
+            } else if (chronoState === 'running') {
+                stopChrono();
+            } else if (chronoState === 'stopped') {
+                resetChrono();
+            }
+        }
+
+        chronoBtn.addEventListener('click', handleChronoAction);
+
+        // Barre d'espace : changer l'état du chrono
+        window.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' || e.key === ' ') {
+                // Ne pas déclencher si on est dans un champ de saisie
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+                e.preventDefault();
+                handleChronoAction();
+            }
+        });
+
+        // Initial state
+        updateButton();
+
+        // Initial draw
+        drawChrono(0);
+    </script>
+</body>
+</html>
