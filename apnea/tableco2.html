@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Table CO2 - Calculateur</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+        .container { max-width: 400px; margin: auto; background: #f9f9f9; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px #aaa; }
+        input, button { font-size: 1.1em; margin: 10px 0; padding: 8px 16px; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calculateur de Table CO2</h2>
+        <label>Temps d'apnée max :</label><br>
+        <input type="number" id="max-apnea-min" min="0" max="10" value="2" style="width:50px;"> min
+        <input type="number" id="max-apnea-sec" min="0" max="59" value="0" style="width:50px;"> sec<br>
+        <label for="apnea-percent">Pourcentage du temps max pour l'apnée :</label><br>
+        <input type="number" id="apnea-percent" min="10" max="100" step="5" value="50"> %<br>
+        <div id="table-result"></div>
+    </div>
+    <script>
+        // Génère une table CO2 classique (8 cycles, départ à 2:00, intervalle -15s à chaque cycle)
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        function roundToQuarterSecond(sec) {
+            return Math.floor(sec / 15) * 15;
+        }
+
+        function computeCycles(maxApnea, apneaPercent) {
+            let cycles = [];
+            let rest = 120;
+            let apneaTimeRaw = maxApnea * apneaPercent / 100;
+            let apneaTime = roundToQuarterSecond(apneaTimeRaw);
+            for (let i = 1; i <= 8; i++) {
+                cycles.push({
+                    cycle: i,
+                    rest: rest,
+                    apnea: apneaTime
+                });
+                rest = Math.max(15, rest - 15);
+            }
+            return cycles;
+        }
+
+        function generateTable() {
+            // --- Partie calcul ---
+            const min = parseInt(document.getElementById('max-apnea-min').value, 10);
+            const sec = parseInt(document.getElementById('max-apnea-sec').value, 10);
+            const maxApnea = min * 60 + sec;
+            const apneaPercent = parseInt(document.getElementById('apnea-percent').value, 10);
+            if (isNaN(maxApnea) || maxApnea < 30) {
+                document.getElementById('table-result').innerHTML = '<span style="color:red">Veuillez entrer un temps valide (>= 30s).</span>';
+                return;
+            }
+            if (isNaN(apneaPercent) || apneaPercent < 10 || apneaPercent > 100) {
+                document.getElementById('table-result').innerHTML = '<span style="color:red">Veuillez entrer un pourcentage valide (10-100).</span>';
+                return;
+            }
+            let cycles = computeCycles(maxApnea, apneaPercent);
+            let totalTime = 0;
+            for (const c of cycles) {
+                totalTime += c.rest + c.apnea;
+            }
+
+            // --- Partie affichage ---
+            let html = '<table><tr><th>Cycle</th><th>Repos</th><th>Apnée</th></tr>';
+            for (const c of cycles) {
+                html += `<tr><td>${c.cycle}</td><td>${formatTime(c.rest)}</td><td>${formatTime(c.apnea)}</td></tr>`;
+            }
+            html += '</table>';
+            html += `<div style='margin-top:15px;font-weight:bold;'>Temps total de la table : ${formatTime(totalTime)}</div>`;
+            document.getElementById('table-result').innerHTML = html;
+        }
+
+        // Génération automatique de la table à chaque modification
+
+        document.getElementById('max-apnea-min').addEventListener('input', generateTable);
+        document.getElementById('max-apnea-sec').addEventListener('input', generateTable);
+        document.getElementById('apnea-percent').addEventListener('input', generateTable);
+
+        // Génération initiale au chargement
+        document.addEventListener('DOMContentLoaded', generateTable);
+    </script>
+</body>
+</html>
