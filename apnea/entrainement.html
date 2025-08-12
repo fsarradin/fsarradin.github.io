@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Entraînement CO2</title>
+    <link rel="stylesheet" href="../minut/minut.css">
+    <style>
+        body { background: #222; color: #fff; font-family: Arial, sans-serif; }
+        .container { max-width: 600px; margin: 40px auto; background: #333; padding: 30px; border-radius: 16px; box-shadow: 0 0 20px #000a; }
+        h2 { margin-bottom: 20px; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        th, td { border: 1px solid #555; padding: 8px; text-align: center; }
+        th { background: #444; }
+        .active-row { background: #1e90ff; color: #fff; font-weight: bold; }
+        #minuteur-zone { margin: 30px 0; }
+        #startStopBtn { margin-top: 20px; }
+        .red { color: #ff4444 !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Entraînement CO2</h2>
+        <div>
+            <label>Temps d'apnée max :</label>
+            <input type="number" id="max-apnea-min" min="0" max="10" value="2" style="width:50px;"> min
+            <input type="number" id="max-apnea-sec" min="0" max="59" value="0" style="width:50px;"> sec
+            <br>
+            <label for="apnea-percent">Pourcentage du temps max pour l'apnée :</label>
+            <input type="number" id="apnea-percent" min="10" max="100" step="5" value="50"> %
+        </div>
+        <div id="minuteur-zone"></div>
+        <div id="phase-indicator" style="text-align:center;font-size:1.3em;margin:10px 0 0 0;"></div>
+        <table id="table-co2">
+            <thead>
+                <tr><th>Cycle</th><th>Apnée</th><th>Repos</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button id="startStopBtn">Start</button>
+    </div>
+    <script>
+    // --- Utilitaires ---
+    function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    function roundToQuarterSecond(sec) {
+        return Math.floor(sec / 15) * 15;
+    }
+    function computeCycles(maxApnea, apneaPercent) {
+        let cycles = [];
+        let rest = 120;
+        let apneaTimeRaw = maxApnea * apneaPercent / 100;
+        let apneaTime = roundToQuarterSecond(apneaTimeRaw);
+        for (let i = 1; i <= 8; i++) {
+            cycles.push({ cycle: i, rest: rest, apnea: apneaTime });
+            rest = Math.max(15, rest - 15);
+        }
+        // Supprimer le dernier repos
+        if (cycles.length > 0) cycles[cycles.length - 1].rest = null;
+        return cycles;
+    }
+
+    // --- Affichage de la table ---
+    let cycles = [];
+    let currentIdx = -1;
+    function updateTable() {
+        const min = parseInt(document.getElementById('max-apnea-min').value, 10);
+        const sec = parseInt(document.getElementById('max-apnea-sec').value, 10);
+        const maxApnea = min * 60 + sec;
+        const apneaPercent = parseInt(document.getElementById('apnea-percent').value, 10);
+        cycles = computeCycles(maxApnea, apneaPercent);
+        const tbody = document.querySelector('#table-co2 tbody');
+        tbody.innerHTML = '';
+        cycles.forEach((c, idx) => {
+            const tr = document.createElement('tr');
+            if (idx === currentIdx) tr.className = 'active-row';
+            let restCell = c.rest !== null ? formatTime(c.rest) : '';
+            tr.innerHTML = `<td>${c.cycle}</td><td>${formatTime(c.apnea)}</td><td>${restCell}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+    document.getElementById('max-apnea-min').addEventListener('input', updateTable);
+    document.getElementById('max-apnea-sec').addEventListener('input', updateTable);
+    document.getElementById('apnea-percent').addEventListener('input', updateTable);
+
+    // --- Minuteur palette ---
+    let timerState = 'ready'; // ready, countdown, running, stopped
+    let timerInterval = null;
+    let phase = 'countdown'; // countdown, apnea, rest
+    let phaseIdx = 0;
+    let phaseTime = 0;
+    let phaseTotal = 0;
+    let countdown = 10;
+    
+    const minuteurZone = document.getElementById('minuteur-zone');
+    minuteurZone.innerHTML = `<div class="minuteur-container"><div class="digits"><div class="digit-group"><div class="digit" id="min1"></div></div><div class="digit-group"><div class="digit" id="min2"></div></div><span class="separator">:</span><div class="digit-group"><div class="digit" id="sec1"></div></div><div class="digit-group"><div class="digit" id="sec2"></div></div></div></div>`;
+
+    function setMinuteur(sec) {
+        let m = Math.floor(sec / 60);
+        let s = sec % 60;
+        document.getElementById('min1').textContent = Math.floor(m / 10);
+        document.getElementById('min2').textContent = m % 10;
+        document.getElementById('sec1').textContent = Math.floor(s / 10);
+        document.getElementById('sec2').textContent = s % 10;
+    }
+
+    function setMinuteurRed(isRed) {
+        document.getElementById('min1').classList.toggle('red', isRed);
+        document.getElementById('min2').classList.toggle('red', isRed);
+        document.getElementById('sec1').classList.toggle('red', isRed);
+        document.getElementById('sec2').classList.toggle('red', isRed);
+    }
+
+    function updatePhaseIndicator() {
+        const indicator = document.getElementById('phase-indicator');
+        if (phase === 'apnea') {
+            indicator.textContent = 'Apnée';
+            indicator.style.color = '#1e90ff';
+        } else if (phase === 'rest') {
+            indicator.textContent = 'Repos';
+            indicator.style.color = '#aaa';
+        } else if (phase === 'countdown') {
+            indicator.textContent = 'Préparation';
+            indicator.style.color = '#fff';
+        } else {
+            indicator.textContent = '';
+        }
+    }
+    function startEntrainement() {
+        timerState = 'countdown';
+        phase = 'countdown';
+        phaseIdx = -1;
+        phaseTime = countdown;
+        phaseTotal = countdown;
+        setMinuteur(phaseTime);
+        setMinuteurRed(true);
+        currentIdx = -1;
+        updateTable();
+        document.getElementById('startStopBtn').textContent = 'Stop';
+        updatePhaseIndicator();
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(tickEntrainement, 1000);
+    }
+    function stopEntrainement() {
+        timerState = 'stopped';
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('startStopBtn').textContent = 'Reset';
+        updatePhaseIndicator();
+    }
+    function resetEntrainement() {
+        timerState = 'ready';
+        phase = 'countdown';
+        phaseIdx = -1;
+        phaseTime = 0;
+        phaseTotal = 0;
+        setMinuteur(0);
+        setMinuteurRed(false);
+        currentIdx = -1;
+        updateTable();
+        document.getElementById('startStopBtn').textContent = 'Start';
+        updatePhaseIndicator();
+    }
+    function tickEntrainement() {
+        if (phaseTime > 0) {
+            phaseTime--;
+            setMinuteur(phaseTime);
+            setMinuteurRed(phaseTime <= 10 && phaseTime > 0);
+        } else {
+            if (phase === 'countdown') {
+                phase = 'apnea';
+                phaseIdx = 0;
+                phaseTime = cycles[phaseIdx].apnea;
+                phaseTotal = phaseTime;
+                currentIdx = phaseIdx;
+                updateTable();
+                setMinuteur(phaseTime);
+                setMinuteurRed(false);
+            } else if (phase === 'apnea') {
+                phase = 'rest';
+                phaseTime = cycles[phaseIdx].rest;
+                phaseTotal = phaseTime;
+                setMinuteur(phaseTime);
+                setMinuteurRed(false);
+            } else if (phase === 'rest') {
+                phaseIdx++;
+                if (phaseIdx < cycles.length) {
+                    phase = 'apnea';
+                    phaseTime = cycles[phaseIdx].apnea;
+                    phaseTotal = phaseTime;
+                    currentIdx = phaseIdx;
+                    updateTable();
+                    setMinuteur(phaseTime);
+                    setMinuteurRed(false);
+                } else {
+                    stopEntrainement();
+                }
+            }
+        }
+        updatePhaseIndicator();
+    }
+    document.getElementById('startStopBtn').addEventListener('click', function() {
+        if (timerState === 'ready') {
+            startEntrainement();
+        } else if (timerState === 'countdown' || timerState === 'running') {
+            stopEntrainement();
+        } else if (timerState === 'stopped') {
+            resetEntrainement();
+        }
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTable();
+        resetEntrainement();
+        updatePhaseIndicator();
+    });
+    </script>
+</body>
+</html>
